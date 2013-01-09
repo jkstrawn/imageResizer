@@ -1,0 +1,23 @@
+
+* {
+	margin: 0px;
+	padding: 0px;
+	outline:none;}
+
+*:focus {
+	outline: none;
+}
+
+body {
+	font-size:14px;
+	background: gray;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;}
+
+#header {
+	margin: 20px;}
+
+#surface {
+	margin: 20px;
+	background: black;}
