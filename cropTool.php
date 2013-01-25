@@ -56,7 +56,45 @@
 				ctx.drawImage(img, crop_x,crop_y,crop_width,crop_height, 0,0,crop_width,crop_height);
 
 				// output the base64 of the cropped image
-				document.getElementById('output').innerHTML = "<img id='target2' src=" + canvas.toDataURL('image/jpeg') + ">";
+				//document.getElementById('output').innerHTML = "<img id='target2' src=" + canvas.toDataURL('image/jpeg') + ">";
+
+
+
+var canvasData = canvas.toDataURL("image/png");
+
+
+
+
+	var postData = "canvasData="+canvasData;
+	var debugConsole= document.getElementById("debugConsole");
+	debugConsole.value=canvasData;
+
+	//alert("canvasData ="+canvasData );
+	var ajax = new XMLHttpRequest();
+	ajax.open("POST",'testSave.php',true);
+	ajax.setRequestHeader('Content-Type', 'canvas/upload');
+	//ajax.setRequestHeader('Content-TypeLength', postData.length);
+
+
+	ajax.onreadystatechange=function()
+  	{
+		if (ajax.readyState == 4)
+		{
+			//alert(ajax.responseText);
+			// Write out the filename.
+    			document.getElementById("debugFilenameConsole").innerHTML="Saved as<br><a target='_blank' href='"+ajax.responseText+"'>"+
+    			ajax.responseText+"</a><br>Reload this page to generate new image or click the filename to open the image file.";
+		}
+  	}
+
+	ajax.send(postData);
+
+
+
+
+document.getElementById('output').innerHTML = "<img id='target2' src=" + canvasData + ">";
+
+				//window.location.href = "upload.php?urll=" + url;
 			}
 
 			function revertToOldImage() {
@@ -133,9 +171,12 @@
 			<input type="button" id="button3" value="Upload Image" onclick="uploadImage();">
 		</div>
 
+<textarea id="debugConsole" rows="10" cols="60">Data</textarea>
+<div id="debugFilenameConsole">Saved as<br><a target="_blank" href="http://www.permadi.com/canvasImages/canvas717.png">
+	http://www.permadi.com/canvasImages/canvas717.png</a><br>Reload this page to generate new image or click the filename to open the image file.</div>
 
 
-<form action="uploadftp.php" method="POST" enctype="multipart/form-data">
+<form action="cropTool.php" method="POST" enctype="multipart/form-data">
 <table align="center">
 
 
@@ -165,51 +206,58 @@ Select your file:
 </html>
 
 <?
-if(isset($_POST["submit"]) {
+$childname = $_GET["child_name"];
+print $childname;
+
+if(isset($_POST["submit"])) {
 
 	set_time_limit(300);//for uploading big files
-	
-$paths='children';
+		
+	$paths='children';
 
-$filep=$_FILES['userfile']['tmp_name'];
+	$ftp_server='ftp.blessingthechildren.org';
 
-$ftp_server='ftp.blessingthechildren.org';
+	$ftp_user_name='KStrawn';
 
-$ftp_user_name='KStrawn';
+	$ftp_user_pass='Free22@@';
 
-$ftp_user_pass='Free22@@';
-
-$name=$_FILES['userfile']['name'];
+$fp = fopen('http://blessingthechildren.org/children/dolphins.jpg', 'r');
 
 
+	$filep=$_FILES['userfile']['tmp_name'];
 
-// set up a connection to ftp server
-$conn_id = ftp_connect($ftp_server);
 
-// login with username and password
-$login_result = ftp_login($conn_id, $ftp_user_name, $ftp_user_pass);
+	// set up a connection to ftp server
+	$conn_id = ftp_connect($ftp_server);
 
-// check connection and login result
-if ((!$conn_id) || (!$login_result)) {
-       echo "FTP connection has encountered an error!";
-       echo "Attempted to connect to $ftp_server for user $ftp_user_name....";
-       exit;
-   } else {
-       echo "Connected to $ftp_server, for user $ftp_user_name".".....";
-   }
+	// login with username and password
+	$login_result = ftp_login($conn_id, $ftp_user_name, $ftp_user_pass);
 
-// upload the file to the path specified
-$upload = ftp_put($conn_id, $paths.'/'.$name, $filep, FTP_BINARY);
+	// check connection and login result
+	if ((!$conn_id) || (!$login_result)) {
+	       echo "FTP connection has encountered an error!";
+	       echo "Attempted to connect to $ftp_server for user $ftp_user_name....";
+	       exit;
+	   } else {
+	       echo "Connected to $ftp_server, for user $ftp_user_name".".....";
+	   }
 
-// check the upload status
-if (!$upload) {
-       echo "FTP upload has encountered an error!";
-   } else {
-       echo "Uploaded file with name $name to $ftp_server ";
-   }
+	// upload the file to the path specified
+	//$upload = ftp_put($conn_id, $paths.'/'.$childname.'.jpg', $filep, FTP_BINARY);
 
-// close the FTP connection
-ftp_close($conn_id);	
+if (ftp_fput($conn_id, $paths.'/werx.jpg', $fp, FTP_BINARY)) {
+    echo "Successfully uploaded $file\n";
+} else {
+    echo "There was a problem while uploading $file\n";
 }
 
-?>
+	// check the upload status
+	if (!$upload) {
+	       echo "FTP upload has encountered an error!";
+	   } else {
+	       echo "Uploaded file with name $childname.jpg to $ftp_server ";
+	   }
+
+	// close the FTP connection
+	ftp_close($conn_id);	
+}
