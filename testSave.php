@@ -1,8 +1,12 @@
 <?php
-if (isset($GLOBALS["HTTP_RAW_POST_DATA"]))
-{
-	// Get the data
-	$imageData=$GLOBALS['HTTP_RAW_POST_DATA'];
+
+	$data = $_POST['data'];
+
+	$name = $data['name'];
+	$imageData = $data['imageData'];
+
+
+
 
 	// Remove the headers (data:,) part.  
 	// A real application should use them according to needs such as to check image type
@@ -28,11 +32,13 @@ if (isset($GLOBALS["HTTP_RAW_POST_DATA"]))
 	// login with username and password
 	$login_result = ftp_login($conn_id, $ftp_user_name, $ftp_user_pass);
 
-
 	// Save file.  This example uses a hard coded filename for testing, 
 	// but a real application can specify filename in POST variable
-	$fp = fopen( 'test.png', 'a' );
+	$fp = fopen( '../'.$name.'.jpg', 'w' );
 	fwrite( $fp, $unencodedData);
+	if($fp) {
+		echo json_encode(':'.$name.'.jpg');
+	}
 	fclose( $fp );
-}
 ?>
+

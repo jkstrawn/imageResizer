@@ -14,6 +14,7 @@
 			var jcrop_api;
 			var old_image;
 			var child_name;
+			var lastImageData = 0;
 
 			jQuery(function($) {
 
@@ -40,7 +41,8 @@
 					setSelect: [ 0, 0, 90, 120 ],
 					aspectRatio: 7/6,
 					onSelect: setCoords,
-					onChange: setCoords
+					onChange: setCoords,
+					onDblClick: useImage
 				});				
 			}
 
@@ -49,52 +51,65 @@
 				var canvas = document.createElement('canvas');
 				var ctx = canvas.getContext('2d');
 
-				canvas.width = crop_width;
-				canvas.height = crop_height;
+				canvas.width = 340;
+				canvas.height = 296;
 
 				// draw the image with offset
-				ctx.drawImage(img, crop_x,crop_y,crop_width,crop_height, 0,0,crop_width,crop_height);
+				ctx.drawImage(img, crop_x,crop_y,crop_width,crop_height, 0,0,canvas.width,canvas.height);
 
 				// output the base64 of the cropped image
 				//document.getElementById('output').innerHTML = "<img id='target2' src=" + canvas.toDataURL('image/jpeg') + ">";
+				var canvasData = canvas.toDataURL("image/jpg");
+				lastImageData = canvasData;
+				document.getElementById('output').innerHTML = "<img id='target2' src=" + canvasData + ">";
+			}
 
+			var AjaxPostCall = function(url, dataJSON, callback, error) {
+				$.ajax({
+						type : 'POST',
+						url : url,
+						dataType : 'json',
+						data: {
+							data : dataJSON
+						},
+						success : function(data){
+							callback(data);
+						},
+						error : function(err) {
+							error(err.responseText);
+						}
+				});
+			};
 
+			function uploadImage() {
+				if(lastImageData) {
+					var replyText = {name: child_name, imageData: lastImageData};
 
-var canvasData = canvas.toDataURL("image/png");
+					AjaxPostCall("testSave.php", replyText, function(data){
+						var imageName = data.substr(1);
+						if (confirm('The picture has been saved with the name: \n' + imageName)) {
+						    //location = "http://www.blessingthechildren.org/children/upload";
+						    window.close();
+						}
+						//alert('The picture has been saved with the name: \n' + imageName);
+						//location = "http://www.blessingthechildren.org/children/upload";
+					}, function(error){
+						console.log(error);
+					});
+				} else {
+					alert("The cropped image is not available.")
+				}
 
+			}
 
+			function AjaxSucceeded(result) {  
+			    if (result.d != null && result.d != '') {
+			        alert("Success? " + result.d);  //result must be followed by .d to display the results, this is a json requirement
+			      }
+			}
 
-
-	var postData = "canvasData="+canvasData;
-	var debugConsole= document.getElementById("debugConsole");
-	debugConsole.value=canvasData;
-
-	//alert("canvasData ="+canvasData );
-	var ajax = new XMLHttpRequest();
-	ajax.open("POST",'testSave.php',true);
-	ajax.setRequestHeader('Content-Type', 'canvas/upload');
-	//ajax.setRequestHeader('Content-TypeLength', postData.length);
-
-
-	ajax.onreadystatechange=function()
-  	{
-		if (ajax.readyState == 4)
-		{
-			//alert(ajax.responseText);
-			// Write out the filename.
-    			document.getElementById("debugFilenameConsole").innerHTML="Saved as<br><a target='_blank' href='"+ajax.responseText+"'>"+
-    			ajax.responseText+"</a><br>Reload this page to generate new image or click the filename to open the image file.";
-		}
-  	}
-
-	ajax.send(postData);
-
-
-
-
-document.getElementById('output').innerHTML = "<img id='target2' src=" + canvasData + ">";
-
-				//window.location.href = "upload.php?urll=" + url;
+			function AjaxFailed(result) {
+			    alert("Failure? " + result.status + ' ' + result.statusText);
 			}
 
 			function revertToOldImage() {
@@ -122,27 +137,47 @@ document.getElementById('output').innerHTML = "<img id='target2' src=" + canvasD
 			}
 
 			function cropLoadedImage(evt) {
-				//Retrieve the first (and only!) File from the FileList object
-				var f = evt.target.files[0]; 
 
-				if (f) {
-					var reader = new FileReader();
-					reader.readAsDataURL(f);
-					reader.onload = function(e) { 
-						var img = new Image;
-						img.onload = function() {
-							drawImage(img);
+				if (typeof window.FileReader === 'function') {
+
+					//Retrieve the first (and only!) File from the FileList object
+					var f = evt.target.files[0]; 
+
+					if (f) {
+						var reader = new FileReader();
+						reader.readAsDataURL(f);
+						reader.onload = function(e) { 
+							var img = new Image;
+							img.onload = function() {
+								drawImage(img);
+							}
+							img.src = event.target.result;
 						}
-						img.src = event.target.result;
+					} else { 
+						alert("Failed to load file");
 					}
-				} else { 
-					alert("Failed to load file");
+
+				} else {
+					var img = new Image;
+					img.onload = function() {
+						drawImage(img);
+					}
+					var input = document.getElementById('fileinput');
+					img.src = input.value;
+					document.getElementById('output').innerHTML = "<img id='target2' src=" + input.value + ">";
+
 				}
+
+
+
 			}
 
 
 
-
+			function closeee() {
+				console.log("trying to close the window");
+				self.close();
+			}
 
 
 		</script>
@@ -171,41 +206,10 @@ document.getElementById('output').innerHTML = "<img id='target2' src=" + canvasD
 			<input type="button" id="button3" value="Upload Image" onclick="uploadImage();">
 		</div>
 
-<textarea id="debugConsole" rows="10" cols="60">Data</textarea>
-<div id="debugFilenameConsole">Saved as<br><a target="_blank" href="http://www.permadi.com/canvasImages/canvas717.png">
-	http://www.permadi.com/canvasImages/canvas717.png</a><br>Reload this page to generate new image or click the filename to open the image file.</div>
-
-
-<form action="cropTool.php" method="POST" enctype="multipart/form-data">
-<table align="center">
-
-
-
-
-<tr>
-<td align="right">
-Select your file:
-</td>
-<td>
-<input name="userfile" type="file" size="50">
-</td>
-</tr>
-</table>
-<table align="center">
-<tr>
-<td align="center">
-<input type="submit" name="submit" value="Upload image" />
-</td>
-</tr>
-
-</table>
-</form>
-
-
 	</body>
 </html>
 
-<?
+<?php
 $childname = $_GET["child_name"];
 print $childname;
 
